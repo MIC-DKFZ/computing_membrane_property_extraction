@@ -12,8 +12,6 @@ from matplotlib import cm
 import matplotlib as mpl
 import itertools
 import math
-from tqdm import tqdm
-import pandas as pd
 
 import warnings
 warnings.filterwarnings(action='ignore', message='Mean of empty slice')
@@ -25,24 +23,25 @@ px_to_nm=100/45
 
 class_dict = {
     0: "background",
-    1: "covered_area",
+    1: "area_without_pores",
     2: "open_pore",
     3: "closed_pore",
     4: "internal_structure",
     5: "artifact_blob",
     6: "artifact_dust",
 }
-cmap_classes = [
-    [0, 0, 0],  # 0 - background
-    [49, 99, 149],  # 1 - covered_area
-    [184, 46, 46],  # 2 - open_pore
-    [16, 150, 24],  # 3 - closed_pore
-    [255, 153, 0],  # 4 - internal_structure
-    [153, 0, 153],  # 5 - artifact_blob
-    [0, 153, 198],  # 6 - artifact_dust
-    #[180, 125, 189],  # 7 - ignore
-]
 
+cmap_classes=[
+    [0,0,0],
+    [49, 99, 149], # 1 -navi blue
+    [184, 46, 46],  # 2 - red
+    [16, 150, 24], # 3 - green
+    [255, 153, 0], # 4 - orange
+    [153, 0, 153], # 5 - purple
+    [0, 153, 198], # 6 - turquoise
+    [246,207,113], # 7- sand
+    #[221, 68, 119], # 8 - pink
+]
 class ColorMapper():
     def __init__(self):
         self.cmap = mpl.colormaps["magma"]
@@ -225,7 +224,7 @@ class DataExtractor:
 
     def get__covered_area__properties(self):
         class_id = 1
-        class_name = "covered_area"
+        class_name = "area_without_pores"
 
         properties = self.get__class__properties([class_id])
         properties = {f"{class_name}__{k}": v for k, v in properties.items()}
@@ -379,11 +378,11 @@ class DataExtractor:
             fig[bbox[0] : bbox[2], bbox[1] : bbox[3]][pore.properties["image"]] = col
         return fig
 
-    def show_pore_size(self):
+    def show_pore_size(self,min_val=15,max_val=2300):
         w, h, c = self.img.shape
         fig = np.ones((w, h, c), dtype=np.uint8) * 255
         for pore in self.all_pores:
-            col=self.cmap(pore.properties.area*px_to_nm*px_to_nm,min_val=15,max_val=2300)
+            col=self.cmap(pore.properties.area*px_to_nm*px_to_nm,min_val=min_val,max_val=max_val)
             bbox = pore.properties["bbox"]
             fig[bbox[0] : bbox[2], bbox[1] : bbox[3]][pore.properties["image"]] = col
         return fig
@@ -409,7 +408,7 @@ class DataExtractor:
             col = self.cmap.rand_col()
             bbox = pore.properties["bbox"]
             x, y = pore.properties.centroid  # ["centroid"]
-            d = pore.properties.equivalent_diameter  # ["equivalent_diameter"]
+            d = pore.properties.equivalent_diameter  # ["equivalent_diameter"] ["feret_diameter_max"]
             #x=round(x)
             #y=round(y)
 
@@ -423,7 +422,7 @@ class DataExtractor:
             pore_grid=np.zeros((x_max-x_min,y_max-y_min))
             pore_grid[bbox[0]-x_min:bbox[2]-x_min,bbox[1]-y_min:bbox[3]-y_min]=pore.properties["image"]
 
-            coords = np.indices(pore_grid.shape)
+            coords = np.indices(pore_grid.shape)+0.5
             dist = np.sqrt(np.sum((coords - np.array([x-x_min,y-y_min]).reshape(-1, 1, 1)) ** 2, axis=0))
             #t=dist<=d/2
             tp=np.logical_and(dist<=d/2,pore_grid)
@@ -558,7 +557,7 @@ class Pore:
         pore_grid[bbox[0] - x_min:bbox[2] - x_min, bbox[1] - y_min:bbox[3] - y_min] = self.properties["image"]
 
         # Get the distance from each point in the grid to the circles center (x,y)
-        coords = np.indices(pore_grid.shape)
+        coords = np.indices(pore_grid.shape)+0.5
         dist = np.sqrt(
             np.sum((coords - np.array([x - x_min, y - y_min]).reshape(-1, 1, 1)) ** 2, axis=0))
 
@@ -572,20 +571,20 @@ class Pore:
 
         return iou
 
-        if self.properties.axis_major_length==0:
-            circ=0
-        else:
-            circ=self.properties.axis_minor_length/self.properties.axis_major_length
-        return circ
-
-        circ = (4 * math.pi * self.properties.area) / (
-                self.properties.perimeter * self.properties.perimeter
-        )
-
-        print("C",circ,self.properties.perimeter,self.properties.eccentricity)
-        return circ
-
-        return self.properties.eccentricity
+        # if self.properties.axis_major_length==0:
+        #     circ=0
+        # else:
+        #     circ=self.properties.axis_minor_length/self.properties.axis_major_length
+        # return circ
+        #
+        # circ = (4 * math.pi * self.properties.area) / (
+        #         self.properties.perimeter * self.properties.perimeter
+        # )
+        #
+        # print("C",circ,self.properties.perimeter,self.properties.eccentricity)
+        # return circ
+        #
+        # return self.properties.eccentricity
 
 
 

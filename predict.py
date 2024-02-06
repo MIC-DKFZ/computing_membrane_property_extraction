@@ -1,3 +1,4 @@
+import argparse
 import os
 import requests
 from tqdm import tqdm
@@ -9,6 +10,7 @@ import sys
 
 sys.stdout = open(os.devnull, "w")
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
+
 sys.stdout = sys.__stdout__
 import torch
 
@@ -83,16 +85,12 @@ if __name__ == "__main__":
     model_name = "nnUNetTrainerBN__nnUNetPlans__2d"
     model_folder = "nnUNetv2_trained_models"
     weights_url = "https://syncandshare.desy.de/index.php/s/XXstCCX8Ln6tnCn/download/Dataset254_COMPUTING_it4.zip"
-    # parser = argparse.ArgumentParser(description='Preprocess images in input directory (renaming + cropping)')
-    #
-    # parser.add_argument('-i', '--input', required=True, help='Input Directory')
-    # parser.add_argument('-o', '--output', required=True, help='Output Directory')
-    #
-    # args = parser.parse_args()
-    # input_dir=args.input
-    # output_dir=args.output
+    parser = argparse.ArgumentParser(description='Preprocess images in input directory (renaming + cropping)')
 
-    input_dir="/home/l727r/Desktop/HEREON_2023_COMPUTING/Data/Data_to_predict/PS-P4VP surface images (2024_02_02_different magnifications)_extract"
+    parser.add_argument('-i', '--input', required=True, help='Input Directory')
+
+    args = parser.parse_args()
+    input_dir=args.input
 
     print(f"{stage}: Started")
     # Download Model Weights if the not already exist
@@ -108,6 +106,6 @@ if __name__ == "__main__":
         print(f"{stage}: Model Weights already downloaded")
 
     # Run nnUNet
-    run_nnUNet(join(input_dir,"images"),join(input_dir,"masks"),model_folder)
+    run_nnUNet(join(input_dir, "images"), join(input_dir, "masks"), model_folder)
 
     print(f"{stage}: Done")

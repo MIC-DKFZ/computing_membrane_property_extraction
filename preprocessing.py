@@ -1,7 +1,6 @@
 import argparse
 import os
 from os.path import join, split
-import glob as glob
 import pandas as pd
 from skimage import io
 from tqdm import tqdm
@@ -48,26 +47,16 @@ def process_image_file(file, cutoff):
 if __name__ == "__main__":
     stage = "Preprocessing"
 
-    # parser = argparse.ArgumentParser(description='Preprocess images in input directory (renaming + cropping)')
-    #
-    # parser.add_argument('-i', '--input', required=True, help='Input Directory')
-    # parser.add_argument('-o', '--output', required=True, help='Output Directory')
-    # parser.add_argument('--cutoff', type=int, default=60, help='Cutoff Size (default: 60)')
-    #
-    # args = parser.parse_args()
-    # input_dir=args.input
-    # output_dir=args.output
-    # cropsize=args.cropsize
+    parser = argparse.ArgumentParser(description='Preprocess images in input directory (renaming + cropping)')
 
-    input_dir = (
-        "/home/l727r/Desktop/HEREON_2023_COMPUTING/Data/Data_to_predict/PS-P4VP surface images"
-        " (2024_02_02_different magnifications)"
-    )
-    output_dir = (
-        "/home/l727r/Desktop/HEREON_2023_COMPUTING/Data/Data_to_predict/PS-P4VP surface images"
-        " (2024_02_02_different magnifications)_extract"
-    )
-    cutoff = 60
+    parser.add_argument('-i', '--input', required=True, help='Input Directory')
+    parser.add_argument('-o', '--output', required=True, help='Output Directory')
+    parser.add_argument('--cutoff', type=int, default=60, help='Cutoff Size (default: 60)')
+
+    args = parser.parse_args()
+    input_dir=args.input
+    output_dir=args.output
+    cutoff=args.cutoff
 
     # Setup all needed folders
     print(f"{stage}: Started")

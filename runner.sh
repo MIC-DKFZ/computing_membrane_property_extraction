@@ -1,0 +1,6 @@
+%
+root_raw="/home/l727r/Desktop/HEREON_2023_COMPUTING/Data/Data_to_predict/PS-PDMA surface images"
+root_props="/home/l727r/Desktop/HEREON_2023_COMPUTING/Data/Data_to_predict/Membrane_Extraction_PS-PDMA_surface_images_2024_02_06"
+python preprocessing.py -i="$root_raw" -o="$root_props"
+python predict.py -i="$root_props"
+python propertie_extraction.py -i="$root_props"
