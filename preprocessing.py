@@ -1,9 +1,10 @@
 import argparse
 import os
 from os.path import join, split
+from tqdm import tqdm
+
 import pandas as pd
 from skimage import io
-from tqdm import tqdm
 
 
 def find_files(directory, dtype):
@@ -40,23 +41,25 @@ def create_name_mapping(file_names: str):
 
 
 def process_image_file(file, cutoff):
-    image = io.imread(image_file)[:-cutoff, :]
+    image = io.imread(file)[:-cutoff, :]
     return image
 
 
 if __name__ == "__main__":
     stage = "Preprocessing"
 
-    parser = argparse.ArgumentParser(description='Preprocess images in input directory (renaming + cropping)')
+    parser = argparse.ArgumentParser(
+        description="Preprocess images in input directory (renaming + cropping)"
+    )
 
-    parser.add_argument('-i', '--input', required=True, help='Input Directory')
-    parser.add_argument('-o', '--output', required=True, help='Output Directory')
-    parser.add_argument('--cutoff', type=int, default=60, help='Cutoff Size (default: 60)')
+    parser.add_argument("-i", "--input", required=True, help="Input Directory")
+    parser.add_argument("-o", "--output", required=True, help="Output Directory")
+    parser.add_argument("--cutoff", type=int, default=60, help="Cutoff Size (default: 60)")
 
     args = parser.parse_args()
-    input_dir=args.input
-    output_dir=args.output
-    cutoff=args.cutoff
+    input_dir = args.input
+    output_dir = args.output
+    cutoff = args.cutoff
 
     # Setup all needed folders
     print(f"{stage}: Started")

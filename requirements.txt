@@ -1,0 +1,3 @@
+git+https://github.com/MIC-DKFZ/nnUNet.git
+git+https://github.com/MIC-DKFZ/dynamic-network-architectures.git
+opencv-python

@@ -4,15 +4,16 @@ import requests
 from tqdm import tqdm
 import zipfile
 from os.path import join, split
-import numpy as np
 import glob as glob
 import sys
+
+import torch
+import numpy as np
 
 sys.stdout = open(os.devnull, "w")
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
 
 sys.stdout = sys.__stdout__
-import torch
 
 
 def download_file(url: str, save_filepath: str):
@@ -56,11 +57,11 @@ def unzip_weights(file_path: str, target_dir: str):
 
 def run_nnUNet(input_folder: str, output_folder: str, model_folder: str):
     if torch.cuda.is_available():
-        print("Cuda is available - run nnUNet inference on GPU")
+        print(f"{stage}: Cuda is available - run nnUNet inference on GPU")
         perform_everything_on_gpu = True
         device = torch.device("cuda")
     else:
-        print("Cuda is not available - run nnUNet inference on CPU")
+        print(f"{stage}: Cuda is not available - run nnUNet inference on CPU")
         perform_everything_on_gpu = False
         device = torch.device("cpu")
     folds = np.arange(0, len(glob.glob(join(model_folder, "fold_*"))))
@@ -85,12 +86,14 @@ if __name__ == "__main__":
     model_name = "nnUNetTrainerBN__nnUNetPlans__2d"
     model_folder = "nnUNetv2_trained_models"
     weights_url = "https://syncandshare.desy.de/index.php/s/XXstCCX8Ln6tnCn/download/Dataset254_COMPUTING_it4.zip"
-    parser = argparse.ArgumentParser(description='Preprocess images in input directory (renaming + cropping)')
+    parser = argparse.ArgumentParser(
+        description="Preprocess images in input directory (renaming + cropping)"
+    )
 
-    parser.add_argument('-i', '--input', required=True, help='Input Directory')
+    parser.add_argument("-i", "--input", required=True, help="Input Directory")
 
     args = parser.parse_args()
-    input_dir=args.input
+    input_dir = args.input
 
     print(f"{stage}: Started")
     # Download Model Weights if the not already exist

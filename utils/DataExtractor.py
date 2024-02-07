@@ -1,25 +1,21 @@
-import glob
-import os
-import shutil
-from os.path import join
+from os.path import join, split
+import itertools
+import warnings
+
 import cv2
 import numpy as np
-from skimage.measure import label, regionprops, regionprops_table, perimeter
+from skimage.measure import label, regionprops
 from scipy.spatial import Delaunay
-import matplotlib.pyplot as plt
-import matplotlib.lines as lines
-from matplotlib import cm
 import matplotlib as mpl
-import itertools
-import math
 
-import warnings
-warnings.filterwarnings(action='ignore', message='Mean of empty slice')
-warnings.filterwarnings(action='ignore', message='invalid value encountered in divide')
-warnings.filterwarnings(action='ignore', message='invalid value encountered in double_scalars')
-warnings.filterwarnings(action='ignore', message='Degrees of freedom <= 0 for slice')
 
-px_to_nm=100/45
+warnings.filterwarnings(action="ignore", message="Mean of empty slice")
+warnings.filterwarnings(action="ignore", message="invalid value encountered in divide")
+warnings.filterwarnings(action="ignore", message="invalid value encountered in scalar divide")
+warnings.filterwarnings(action="ignore", message="invalid value encountered in double_scalars")
+warnings.filterwarnings(action="ignore", message="Degrees of freedom <= 0 for slice")
+
+px_to_nm = 100 / 45
 
 class_dict = {
     0: "background",
@@ -31,31 +27,32 @@ class_dict = {
     6: "artifact_dust",
 }
 
-cmap_classes=[
-    [0,0,0],
-    [49, 99, 149], # 1 -navi blue
+cmap_classes = [
+    [0, 0, 0],
+    [49, 99, 149],  # 1 -navi blue
     [184, 46, 46],  # 2 - red
-    [16, 150, 24], # 3 - green
-    [255, 153, 0], # 4 - orange
-    [153, 0, 153], # 5 - purple
-    [0, 153, 198], # 6 - turquoise
-    [246,207,113], # 7- sand
-    #[221, 68, 119], # 8 - pink
+    [16, 150, 24],  # 3 - green
+    [255, 153, 0],  # 4 - orange
+    [153, 0, 153],  # 5 - purple
+    [0, 153, 198],  # 6 - turquoise
+    [246, 207, 113],  # 7- sand
+    # [221, 68, 119], # 8 - pink
 ]
-class ColorMapper():
+
+
+class ColorMapper:
     def __init__(self):
         self.cmap = mpl.colormaps["magma"]
 
-    def __call__(self,val, min_val=0,max_val=1,*args, **kwargs):
-        norm_value=(val-min_val)/(max_val-min_val)
-        norm_value=max(0.01, min(norm_value,0.99))
+    def __call__(self, val, min_val=0, max_val=1, *args, **kwargs):
+        norm_value = (val - min_val) / (max_val - min_val)
+        norm_value = max(0.01, min(norm_value, 0.99))
         col = np.array(self.cmap(norm_value)[0:3]) * 255
-        col=col.astype(dtype=np.uint8)
+        col = col.astype(dtype=np.uint8)
         return col
 
     def rand_col(self):
         return np.random.randint(0, 255, [3])
-
 
 
 def point_distance(p0, p1):
@@ -73,8 +70,8 @@ def print_dict(dictionary):
 
 class DataExtractor:
     def __init__(self, img_path, mask_path, verbose=False):
-        self.name = img_path.rsplit("/", 1)[-1]
-        self.cmap=ColorMapper()
+        self.name = split(img_path)[-1]
+        self.cmap = ColorMapper()
 
         # Load Image and Mask
         self.img = cv2.imread(img_path)
@@ -86,7 +83,7 @@ class DataExtractor:
         self.regions = regionprops(label(binary_mask))
 
         # Create Pores, exlcude boreder cases
-        self.all_pores=np.array([Pore(region, self.mask) for region in self.regions])
+        self.all_pores = np.array([Pore(region, self.mask) for region in self.regions])
         self.pores = np.array([pore for pore in self.all_pores if not pore.border_case()])
 
         # Construct the Mesh from all center points of the all regions and then exclude border
@@ -100,7 +97,7 @@ class DataExtractor:
                 if not any([pore.border_case() for pore in pores]):
 
                     self.triangles.append(Triangle([pore.properties.centroid for pore in pores]))
-                    #connections += itertools.combinations(simpices, 2)
+                    # connections += itertools.combinations(simpices, 2)
 
         else:
             self.triangles = []
@@ -141,7 +138,7 @@ class DataExtractor:
         print(f"--- artifact_dust ---")
         print_dict(self.get__artifact_dust__properties())
 
-    def get__class__properties(self, class_ids,in_nm=True):
+    def get__class__properties(self, class_ids, in_nm=True):
 
         binary_mask = np.any([self.mask == class_id for class_id in class_ids], axis=0)
 
@@ -149,7 +146,7 @@ class DataExtractor:
 
         pixel__count = np.sum(binary_mask)
         if in_nm:
-            pixel__count=pixel__count*px_to_nm*px_to_nm
+            pixel__count = pixel__count * px_to_nm * px_to_nm
         pixel__pct = pixel__count / (binary_mask.shape[0] * binary_mask.shape[1]) * 100
 
         instances__count = len(regions)
@@ -159,20 +156,20 @@ class DataExtractor:
         instances__std_size = np.std(instances__size)
 
         return {
-            "area__covered": pixel__count, # in nm
-            #"pixel__pct": pixel__pct,
+            "area__covered": pixel__count,  # in nm
+            # "pixel__pct": pixel__pct,
             "instances__count": instances__count,
-            "instances__mean_size": instances__mean_size, # in nm
-            "instances__std_size": instances__std_size, # in nm
+            "instances__mean_size": instances__mean_size,  # in nm
+            "instances__std_size": instances__std_size,  # in nm
         }
 
     def get__pore__properties(self, class_ids, in_nm=True):
 
-        pixel__count = self.get_total_pore_area(class_ids=class_ids,in_nm=in_nm)
-        #pixel__pct = pixel__count / (self.mask.shape[0] * self.mask.shape[1]) * 100
+        pixel__count = self.get_total_pore_area(class_ids=class_ids, in_nm=in_nm)
+        # pixel__pct = pixel__count / (self.mask.shape[0] * self.mask.shape[1]) * 100
         instances__count = self.get_pore_number(class_ids=class_ids)
-        instances__size = self.get_pore_sizes(class_ids=class_ids,in_nm=in_nm)
-        instances__diameter = self.get_pore_diameter(class_ids=class_ids,in_nm=in_nm)
+        instances__size = self.get_pore_sizes(class_ids=class_ids, in_nm=in_nm)
+        instances__diameter = self.get_pore_diameter(class_ids=class_ids, in_nm=in_nm)
         instances__circularity = self.get_pore_circularities(class_ids=class_ids)
 
         instances__mean_size = np.mean(instances__size)
@@ -186,7 +183,7 @@ class DataExtractor:
 
         return {
             "area__covered": pixel__count,
-            #"pixel__pct": pixel__pct,
+            # "pixel__pct": pixel__pct,
             "instances__count": instances__count,
             "instances__mean_size": instances__mean_size,
             "instances__std_size": instances__std_size,
@@ -209,7 +206,7 @@ class DataExtractor:
         class_name = "open_pores"
 
         properties = self.get__pore__properties(class_id)
-        #properties = self.get__class__properties(class_id)
+        # properties = self.get__class__properties(class_id)
         properties = {f"{class_name}__{k}": v for k, v in properties.items()}
         return properties
 
@@ -218,7 +215,7 @@ class DataExtractor:
         class_name = "closed_pores"
 
         properties = self.get__pore__properties(class_id)
-        #properties = self.get__class__properties(class_id)
+        # properties = self.get__class__properties(class_id)
         properties = {f"{class_name}__{k}": v for k, v in properties.items()}
         return properties
 
@@ -254,7 +251,7 @@ class DataExtractor:
         properties = {f"{class_name}__{k}": v for k, v in properties.items()}
         return properties
 
-    def get__mesh__properties(self,in_nm=True):
+    def get__mesh__properties(self, in_nm=True):
         vertices__count = self.get_mesh_number_vertices()
         edges__count = self.get_mesh_number_edges()
 
@@ -271,7 +268,7 @@ class DataExtractor:
         triangle__std_regularity = np.std(triangle__regularity)
 
         return {
-            #"mesh__vertices__count": vertices__count,
+            # "mesh__vertices__count": vertices__count,
             "mesh__edges__count": edges__count,
             "mesh__edges__mean_length": edges__mean_length,
             "mesh__edges__std_length": edges__std_length,
@@ -285,31 +282,31 @@ class DataExtractor:
         pores = [pore for pore in self.pores if pore.class_id in class_ids]
         return len(pores)
 
-    def get_pore_sizes(self, class_ids=[2, 3],in_nm=True):
+    def get_pore_sizes(self, class_ids=[2, 3], in_nm=True):
         areas = []
         pores = [pore for pore in self.pores if pore.class_id in class_ids]
         for pore in pores:
             areas.append(pore.properties.area)
         if in_nm:
-            areas=[area*px_to_nm**px_to_nm for area in areas]
+            areas = [area * px_to_nm**px_to_nm for area in areas]
         return areas
 
-    def get_total_pore_area(self, class_ids=[2, 3],in_nm=True):
+    def get_total_pore_area(self, class_ids=[2, 3], in_nm=True):
         area = 0
         pores = [pore for pore in self.pores if pore.class_id in class_ids]
         for pore in pores:
             area += pore.properties.area
         if in_nm:
-            area*=px_to_nm**px_to_nm
+            area *= px_to_nm**px_to_nm
         return area
 
-    def get_pore_diameter(self, class_ids=[2, 3],in_nm=True):
+    def get_pore_diameter(self, class_ids=[2, 3], in_nm=True):
         diameters = []
         pores = [pore for pore in self.pores if pore.class_id in class_ids]
         for pore in pores:
             diameters.append(pore.properties.equivalent_diameter)
         if in_nm:
-            diameters=[diameter*px_to_nm for diameter in diameters]
+            diameters = [diameter * px_to_nm for diameter in diameters]
         return diameters
 
     def get_pore_circularities(self, class_ids=[2, 3]):
@@ -331,12 +328,12 @@ class DataExtractor:
         else:
             return 0
 
-    def get_mesh_size(self,in_nm=True):
+    def get_mesh_size(self, in_nm=True):
         areas = []
         for triangle in self.triangles:
             areas.append(triangle.get_area())
         if in_nm:
-            areas=[area*px_to_nm*px_to_nm for area in areas]
+            areas = [area * px_to_nm * px_to_nm for area in areas]
         return areas
 
     def get_mesh_regularity(self):
@@ -345,13 +342,13 @@ class DataExtractor:
             regularity.append(triangle.get_regularity())
         return regularity
 
-    def get_mesh_edge_size(self,in_nm=True):
+    def get_mesh_edge_size(self, in_nm=True):
         distances = []
         for edge in self.edge_tuples:
             coords = [pore.properties.centroid for pore in self.all_pores[np.array(edge)]]
             distances.append(point_distance(coords[0], coords[1]))
         if in_nm:
-            distances=[distance*px_to_nm for distance in distances]
+            distances = [distance * px_to_nm for distance in distances]
         return distances
 
     def show_img(self):
@@ -378,11 +375,13 @@ class DataExtractor:
             fig[bbox[0] : bbox[2], bbox[1] : bbox[3]][pore.properties["image"]] = col
         return fig
 
-    def show_pore_size(self,min_val=15,max_val=2300):
+    def show_pore_size(self, min_val=15, max_val=2300):
         w, h, c = self.img.shape
         fig = np.ones((w, h, c), dtype=np.uint8) * 255
         for pore in self.all_pores:
-            col=self.cmap(pore.properties.area*px_to_nm*px_to_nm,min_val=min_val,max_val=max_val)
+            col = self.cmap(
+                pore.properties.area * px_to_nm * px_to_nm, min_val=min_val, max_val=max_val
+            )
             bbox = pore.properties["bbox"]
             fig[bbox[0] : bbox[2], bbox[1] : bbox[3]][pore.properties["image"]] = col
         return fig
@@ -394,7 +393,7 @@ class DataExtractor:
         for pore in self.all_pores:
             class_id = pore.class_id
             if pore.border_case():
-                col=[122,122,122]
+                col = [122, 122, 122]
             else:
                 col = cmap_classes[class_id]
             bbox = pore.properties["bbox"]
@@ -408,43 +407,53 @@ class DataExtractor:
             col = self.cmap.rand_col()
             bbox = pore.properties["bbox"]
             x, y = pore.properties.centroid  # ["centroid"]
-            d = pore.properties.equivalent_diameter  # ["equivalent_diameter"] ["feret_diameter_max"]
-            #x=round(x)
-            #y=round(y)
+            d = (
+                pore.properties.equivalent_diameter
+            )  # ["equivalent_diameter"] ["feret_diameter_max"]
+            # x=round(x)
+            # y=round(y)
 
-            x_min=int(min(bbox[0],np.trunc(x-d/2)))
-            x_max=int(max(bbox[2],np.ceil(x+d/2)))
+            x_min = int(min(bbox[0], np.trunc(x - d / 2)))
+            x_max = int(max(bbox[2], np.ceil(x + d / 2)))
 
-            y_min=int(min(bbox[1],np.trunc(y-d/2)))
-            y_max=int(max(bbox[3],np.ceil(y+d/2)))
-            #fig = cv2.rectangle(fig, (y_min, x_min), (y_max, x_max), (255, 0, 0), 1)
+            y_min = int(min(bbox[1], np.trunc(y - d / 2)))
+            y_max = int(max(bbox[3], np.ceil(y + d / 2)))
+            # fig = cv2.rectangle(fig, (y_min, x_min), (y_max, x_max), (255, 0, 0), 1)
 
-            pore_grid=np.zeros((x_max-x_min,y_max-y_min))
-            pore_grid[bbox[0]-x_min:bbox[2]-x_min,bbox[1]-y_min:bbox[3]-y_min]=pore.properties["image"]
+            pore_grid = np.zeros((x_max - x_min, y_max - y_min))
+            pore_grid[
+                bbox[0] - x_min : bbox[2] - x_min, bbox[1] - y_min : bbox[3] - y_min
+            ] = pore.properties["image"]
 
-            coords = np.indices(pore_grid.shape)+0.5
-            dist = np.sqrt(np.sum((coords - np.array([x-x_min,y-y_min]).reshape(-1, 1, 1)) ** 2, axis=0))
-            #t=dist<=d/2
-            tp=np.logical_and(dist<=d/2,pore_grid)
-            fp=np.logical_and(dist>d/2,pore_grid)
-            fn=np.logical_and(dist<=d/2,np.logical_not(pore_grid))
+            coords = np.indices(pore_grid.shape) + 0.5
+            dist = np.sqrt(
+                np.sum((coords - np.array([x - x_min, y - y_min]).reshape(-1, 1, 1)) ** 2, axis=0)
+            )
+            # t=dist<=d/2
+            tp = np.logical_and(dist <= d / 2, pore_grid)
+            fp = np.logical_and(dist > d / 2, pore_grid)
+            fn = np.logical_and(dist <= d / 2, np.logical_not(pore_grid))
 
-            iou=tp.sum()/(tp.sum()+fp.sum()+fn.sum())
-            #t=t.astype(int)*255
+            iou = tp.sum() / (tp.sum() + fp.sum() + fn.sum())
+            # t=t.astype(int)*255
 
-            dist=dist/np.max(dist)*255
-            #dist
-            #print(fig.shape)
-            #fig = cv2.circle(fig, (round(y), round(x)), round(d / 2.0), [1, 1, 1], 1)
-            #print(np.min(dist),np.max(dist))
-            #pore_grid*=255
-            #iou*=255
-            #print(np.unique(pore_grid))
+            dist = dist / np.max(dist) * 255
+            # dist
+            # print(fig.shape)
+            # fig = cv2.circle(fig, (round(y), round(x)), round(d / 2.0), [1, 1, 1], 1)
+            # print(np.min(dist),np.max(dist))
+            # pore_grid*=255
+            # iou*=255
+            # print(np.unique(pore_grid))
             col = self.cmap(iou)
-            #fig[x_min: x_max, y_min: y_max][pore_grid.astype(bool)] = col#np.dstack((iou,iou*0,255-iou))#fig[x_min: x_max, y_min: y_max]*0.5+0.5* col
-            fig[x_min: x_max, y_min: y_max][tp] = [0,255,0] #np.dstack((t,t,t))#fig[x_min: x_max, y_min: y_max]*0.5+0.5* col
-            fig[x_min: x_max, y_min: y_max][fp] = [0,0,255]
-            fig[x_min: x_max, y_min: y_max][fn] = [255,0,0]
+            # fig[x_min: x_max, y_min: y_max][pore_grid.astype(bool)] = col#np.dstack((iou,iou*0,255-iou))#fig[x_min: x_max, y_min: y_max]*0.5+0.5* col
+            fig[x_min:x_max, y_min:y_max][tp] = [
+                0,
+                255,
+                0,
+            ]  # np.dstack((t,t,t))#fig[x_min: x_max, y_min: y_max]*0.5+0.5* col
+            fig[x_min:x_max, y_min:y_max][fp] = [0, 0, 255]
+            fig[x_min:x_max, y_min:y_max][fn] = [255, 0, 0]
             # fig[bbox[0]: bbox[2], bbox[1]: bbox[3]][pore.properties["image"]] = \
             # fig[bbox[0]: bbox[2], bbox[1]: bbox[3]][pore.properties["image"]] * 0.5 + 0.5 * col
 
@@ -482,7 +491,7 @@ class DataExtractor:
         fig = np.ones((w, h, c), dtype=np.uint8) * 255
 
         for edge, dist in zip(self.edge_tuples, distances):
-            col = self.cmap(dist,min_val=30,max_val=222)
+            col = self.cmap(dist, min_val=30, max_val=222)
             p1 = self.all_pores[edge[0]].properties.centroid
             p2 = self.all_pores[edge[1]].properties.centroid
             fig = cv2.line(
@@ -500,7 +509,7 @@ class DataExtractor:
             p0, p1, p2 = triangle.get_points()
             c = triangle.get_regularity()
 
-            col=self.cmap(c)
+            col = self.cmap(c)
 
             fig = cv2.drawContours(
                 fig, [np.array([p0, p1, p2])], 0, [int(col[0]), int(col[1]), int(col[2])], -1
@@ -520,11 +529,13 @@ class Pore:
         self.class_id = self.get_class(mask, self.properties)
 
     def border_case(self):
-        #return False
+        # return False
         # Check if the bounding box of the pore touches the image border
         x_min, y_min, x_max, y_max = self.properties.bbox
-        #print(x_min<=0 or y_min<=0 or x_max>=self.mask_shape[0] or y_max>=self.mask_shape[1])
-        return x_min<=0 or y_min<=0 or x_max>=self.mask_shape[0] or y_max>=self.mask_shape[1]
+        # print(x_min<=0 or y_min<=0 or x_max>=self.mask_shape[0] or y_max>=self.mask_shape[1])
+        return (
+            x_min <= 0 or y_min <= 0 or x_max >= self.mask_shape[0] or y_max >= self.mask_shape[1]
+        )
 
     def get_class(self, mask, region):
         mask_region = mask[
@@ -540,7 +551,9 @@ class Pore:
         # Get Properties
         bbox = self.properties["bbox"]
         x, y = self.properties.centroid
-        d = self.properties.equivalent_diameter # diameter of the circle with the same sum of pixels
+        d = (
+            self.properties.equivalent_diameter
+        )  # diameter of the circle with the same sum of pixels
         # Rounding? Leads to different results
         # x=round(x)
         # y=round(y)
@@ -554,15 +567,18 @@ class Pore:
 
         # With the Coordinates create the new bounding box and fill in the image
         pore_grid = np.zeros((x_max - x_min, y_max - y_min))
-        pore_grid[bbox[0] - x_min:bbox[2] - x_min, bbox[1] - y_min:bbox[3] - y_min] = self.properties["image"]
+        pore_grid[
+            bbox[0] - x_min : bbox[2] - x_min, bbox[1] - y_min : bbox[3] - y_min
+        ] = self.properties["image"]
 
         # Get the distance from each point in the grid to the circles center (x,y)
-        coords = np.indices(pore_grid.shape)+0.5
+        coords = np.indices(pore_grid.shape) + 0.5
         dist = np.sqrt(
-            np.sum((coords - np.array([x - x_min, y - y_min]).reshape(-1, 1, 1)) ** 2, axis=0))
+            np.sum((coords - np.array([x - x_min, y - y_min]).reshape(-1, 1, 1)) ** 2, axis=0)
+        )
 
         # Binarize the distance, by checking if the distance is higher or lower than the radius
-        dist=dist <= d / 2
+        dist = dist <= d / 2
 
         # Compute the IoU between the binary cricle and the pore image
         intersection = np.logical_and(dist, pore_grid).sum()
@@ -585,7 +601,6 @@ class Pore:
         # return circ
         #
         # return self.properties.eccentricity
-
 
 
 class Triangle:

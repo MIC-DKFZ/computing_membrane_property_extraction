@@ -2,14 +2,16 @@ import argparse
 import os
 from os.path import join
 import glob as glob
-import pandas as pd
 from tqdm import tqdm
-
-from utils.DataExtractor import DataExtractor,cmap_classes,class_dict
-import cv2
-import numpy as np
 import itertools
 from multiprocessing import Pool
+
+import cv2
+import pandas as pd
+import numpy as np
+
+from utils.DataExtractor import DataExtractor, cmap_classes, class_dict
+
 
 def viz_color_encoding(labels: list[str], cmap):
     # litte helper function to visualize the color-class encoding
@@ -88,7 +90,7 @@ def alpha_blend(img, mask, alpha=1.0, to_RGB=True):
     return fig
 
 
-def process_img(img, mask, root,name_mapping, save_viz=True):
+def process_img(img, mask, root, name_mapping, save_viz=True):
     ex = DataExtractor(img, mask, True)
     file_name = ex.name
 
@@ -102,17 +104,20 @@ def process_img(img, mask, root,name_mapping, save_viz=True):
 
         cv2.imwrite(join(root, "Visualization__Classes", file_name), viz__classes)
         cv2.imwrite(join(root, "Visualization__Pore_Size", file_name), viz__pore_size)
-        cv2.imwrite(join(root, "Visualization__Pore_Circularity", file_name), vize__pore_circularity)
+        cv2.imwrite(
+            join(root, "Visualization__Pore_Circularity", file_name), vize__pore_circularity
+        )
         cv2.imwrite(join(root, "Visualization__Pore_Distance", file_name), vize__pore_distance)
         cv2.imwrite(join(root, "Visualization__Mesh", file_name), vize__mesh)
         cv2.imwrite(join(root, "Visualization__Mesh_Regularity", file_name), vize__mesh_regularity)
 
-    file_name=ex.name
-    org_file_name=name_mapping.loc[name_mapping["new_name"]==file_name,"original_name"].values[0]
+    org_file_name = name_mapping.loc[name_mapping["new_name"] == file_name, "original_name"].values[
+        0
+    ]
 
     joint_props = {
         "file_name": file_name,
-        "org_file_name":org_file_name,
+        "org_file_name": org_file_name,
         **ex.get__mesh__properties(),
         **ex.get__all_pores__properties(),
         **ex.get__open_pores__properties(),
@@ -127,12 +132,14 @@ def process_img(img, mask, root,name_mapping, save_viz=True):
 
 if __name__ == "__main__":
     stage = "Extraction"
-    parser = argparse.ArgumentParser(description='Preprocess images in input directory (renaming + cropping)')
+    parser = argparse.ArgumentParser(
+        description="Preprocess images in input directory (renaming + cropping)"
+    )
 
-    parser.add_argument('-i', '--input', required=True, help='Input Directory')
+    parser.add_argument("-i", "--input", required=True, help="Input Directory")
 
     args = parser.parse_args()
-    root=args.input
+    root = args.input
 
     print(f"{stage}: Started")
 
@@ -152,12 +159,12 @@ if __name__ == "__main__":
         os.makedirs(join(root, "Visualization__Mesh"), exist_ok=True)
         os.makedirs(join(root, "Visualization__Mesh_Regularity"), exist_ok=True)
 
-        img_col=viz_color_encoding(list(class_dict.values()),cmap_classes)
-        cv2.imwrite(join(root,"Labels.png"), img_col)
+        img_col = viz_color_encoding(list(class_dict.values()), cmap_classes)
+        cv2.imwrite(join(root, "Labels.png"), img_col)
 
-    df_columns = ["file_name",'org_file_name'] + get_propertie_names()
+    df_columns = ["file_name", "org_file_name"] + get_propertie_names()
     df = pd.DataFrame(columns=df_columns)
-    name_mapping = pd.read_csv(join(root,"name_mapping.csv"))
+    name_mapping = pd.read_csv(join(root, "name_mapping.csv"))
     print(name_mapping.shape)
     p = Pool(8)
     res = []
@@ -165,13 +172,13 @@ if __name__ == "__main__":
         res.append(
             p.starmap_async(
                 process_img,
-                ((img, mask, root, name_mapping,save_viz),),
+                ((img, mask, root, name_mapping, save_viz),),
             )
         )
     data = [re.get() for re in tqdm(res)]
 
     for d in data:
         df = pd.concat([df, pd.DataFrame(d)], ignore_index=True)
-    df.to_csv(join(root, "membrane_properties.csv"), index=False)  # with redundancies
+    df.to_csv(join(root, "membrane_properties.csv"), index=False)
     print(f"{stage}: Save Membrane Properties to: {join(root, 'membrane_properties.csv')}")
     print(f"{stage}: Done")
