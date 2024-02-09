@@ -94,11 +94,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     input_dir = args.input
-
+    
     print(f"{stage}: Started")
     # Download Model Weights if the not already exist
-    model_folder = join(model_folder, dataset_name, model_name)
-    if not os.path.exists(model_folder):
+    if not os.path.exists(join(model_folder, dataset_name, model_name)):
         print(f"{stage}: Download Model Weights to: {model_folder}")
         os.makedirs(model_folder, exist_ok=True)
         download_file(weights_url, join(model_folder, f"{dataset_name}.zip"))
@@ -109,6 +108,7 @@ if __name__ == "__main__":
         print(f"{stage}: Model Weights already downloaded")
 
     # Run nnUNet
-    run_nnUNet(join(input_dir, "images"), join(input_dir, "masks"), model_folder)
+    run_nnUNet(join(input_dir, "images"), join(input_dir, "masks"), join(model_folder, dataset_name, model_name))
 
     print(f"{stage}: Done")
+
