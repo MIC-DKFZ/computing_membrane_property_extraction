@@ -6,6 +6,8 @@
 # (Optional) - Create a new conda environment
 conda create --name computing python=3.10
 conda activate computing
+# Download Repository
+git clone https://codebase.helmholtz.cloud/hi-dkfz/applied-computer-vision-lab/collaborations/hereon_2023_computing.git
 # Install all required packages
 pip install -r requirements.txt
 ```
