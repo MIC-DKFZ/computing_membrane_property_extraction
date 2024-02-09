@@ -3,11 +3,12 @@
 ## 1. Installation
 
 ```shell
+# Download Repository
+git clone https://codebase.helmholtz.cloud/hi-dkfz/applied-computer-vision-lab/collaborations/hereon_2023_computing.git
+cd hereon_2023_computing
 # (Optional) - Create a new conda environment
 conda create --name computing python=3.10
 conda activate computing
-# Download Repository
-git clone https://codebase.helmholtz.cloud/hi-dkfz/applied-computer-vision-lab/collaborations/hereon_2023_computing.git
 # Install all required packages
 pip install -r requirements.txt
 ```
@@ -16,12 +17,18 @@ pip install -r requirements.txt
 
 ### How to run
 Follow the steps (2.1 - 2.3) to run the complete pipeline step by step. 
-Alternatively adopt the path and execute runner.sh script and the scripts will be executed automatically.
+Alternatively adopt the path and execute runner.sh script (only fo ubuntu) and the scripts will be executed automatically.
+On windows you have to do it step by step like shown below.
 
 ````shell
-# For ubuntu (I dont know how to run bash scripts on windows)
+# For ubuntu (couldnt make it run on windows)
 bash runner.sh 
+# For Windows do it step by step
+python preprocessing.py -i="C:\Users\l727r\Desktop\Computing\PS-P4VP" -o="C:\Users\l727r\Desktop\Computing\PS-P4VP_props"
+python predict.py -i="C:\Users\l727r\Desktop\Computing\PS-P4VP_props"
+python propertie_extraction.py -i="C:\Users\l727r\Desktop\Computing\PS-P4VP_props"
 ````
+
 
 ### 2.1 Preprocessing
 

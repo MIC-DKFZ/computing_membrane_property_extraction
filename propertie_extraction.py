@@ -165,7 +165,6 @@ if __name__ == "__main__":
     df_columns = ["file_name", "org_file_name"] + get_propertie_names()
     df = pd.DataFrame(columns=df_columns)
     name_mapping = pd.read_csv(join(root, "name_mapping.csv"))
-    print(name_mapping.shape)
     p = Pool(8)
     res = []
     for img, mask in zip(imgs, masks):
