@@ -15,7 +15,7 @@ from utils.DataExtractor import DataExtractor, cmap_classes, class_dict
 
 def viz_color_encoding(labels: list[str], cmap):
     # litte helper function to visualize the color-class encoding
-    width = 350
+    width = 400
     height = 60
     num = len(labels)
     img = np.zeros((num * height, width, 3), np.uint8)
