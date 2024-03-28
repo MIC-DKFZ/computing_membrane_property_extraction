@@ -1,5 +1,6 @@
 import argparse
 import os
+import shutil
 from os.path import join
 import glob as glob
 from tqdm import tqdm
@@ -180,4 +181,5 @@ if __name__ == "__main__":
         df = pd.concat([df, pd.DataFrame(d)], ignore_index=True)
     df.to_csv(join(root, "membrane_properties.csv"), index=False)
     print(f"{stage}: Save Membrane Properties to: {join(root, 'membrane_properties.csv')}")
+    shutil.copy(join("utils","Colorbar.png"),join(root,"Colorbar.png"))
     print(f"{stage}: Done")
