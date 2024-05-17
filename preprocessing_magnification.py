@@ -86,7 +86,7 @@ if __name__ == "__main__":
     # Find all .tif files in the dir + subdirs
     print(f"{stage}: Search for files in: {input_dir}")
     image_files = find_files(input_dir, ".tif")
-    image_files = [image_file for image_file in image_files if "!black.tif" not in image_files]
+    image_files = [image_file for image_file in image_files if "!black.tif" not in image_file]
     print(f"{stage}: Found {len(image_files)} Files")
 
     # Create file mapping

@@ -1,5 +1,7 @@
 # COMPUTING - Membrane Property Extraction
 
+# TODO Colorbar viz
+
 ## 1. Installation
 
 ```shell
@@ -51,12 +53,27 @@ All .tif files in the directory + all subdirectories will be used (files named "
 - **root_props:** 
 Path to the folder in which all the processed data and later all the extracted membrane properties will be saved in.
 
+
+```shell
+python preprocessing_magnification.py -i=root_raw -o=root_props -m=magnification
+```
+
+- **root_raw:** 
+Path to the folder which contains the images from which the parameters should be extracted. 
+All .tif files in the directory + all subdirectories will be used (files named "!black.tif" will be excluded).
+- **root_props:** 
+Path to the folder in which all the processed data and later all the extracted membrane properties will be saved in.
+- **magnification:**
+Path to a xlsx file which contains the following two keys: "Image Name (file name on fileserver)" and "Magnification as number"
+- This function should be used when your images have a different magnification than 50.00KX (Image Pixel Size = 2.233 nm).
+In this case the images will be resized to have the same image pixel size. This will result in images with different sizes in the dataset
+
 ### 2.2 Predicting
 
 How to run the prediction script is shown below. During Predicting a segmentation mask is created for each image.
 If a GPU is available the prediction is performed on the GPU, otherwise the CPU is used. 
 Inference on CPU will take longer compared to the GPU.
-When executing the script for the first time, the model weights of nnUNet will be downloaded (~2.7 GB) and saved into the 'nnUNetv2_trained_models' folder.
+When executing the script for the first time, the model weights of nnUNet will be downloaded (~3 GB) and saved into the 'nnUNetv2_trained_models' folder.
 This has to be done only once.
 
 ```shell
@@ -64,7 +81,16 @@ python predict.py -i=root_props
 ```
 - **root_props:** 
 Path to the folder which contains the processed data from the previous stage. 
-The predictions will be saved into this directorys
+The predictions will be saved into this directory. 
+- For this Function a single nnUNet configurations is used (5 models in total) for predicting the images.
+
+```shell
+python predict_ensmble.py -i=root_props
+```
+- **root_props:** 
+Path to the folder which contains the processed data from the previous stage. 
+The predictions will be saved into this directory
+- For this Function an ensemble of 4 nnUNet configurations is used (20 models in total) for predicting the images.
 
 
 ### 2.3 Property Extraction
@@ -79,9 +105,6 @@ python propertie_extraction.py -i=root_props
 - **root_props:** 
 Path to the folder which contains the processed data from the previous stages. 
 The membrane properties and all visualizations will be saved here.
-
-## 3. Limitations
-- Currently, segmentation and membrane extraction works only with images which have a magnification of 50.00KX (Image Pixel Size = 2.233 nm).
 
 
 # Acknowledgements

@@ -1,6 +1,8 @@
 import argparse
 import os
 from os.path import join, split
+
+import numpy as np
 from tqdm import tqdm
 
 import pandas as pd
@@ -70,9 +72,24 @@ if __name__ == "__main__":
     # Find all .tif files in the dir + subdirs
     print(f"{stage}: Search for files in: {input_dir}")
     image_files = find_files(input_dir, ".tif")
-    image_files = [image_file for image_file in image_files if "!black.tif" not in image_files]
     print(f"{stage}: Found {len(image_files)} Files")
+    image_files = [image_file for image_file in image_files if "!black.tif" not in image_file]
+    print(f"{stage}: After Filtering (e.g. !black.tif) {len(image_files)} Files remain")
 
+    files=[image_file.rsplit("/",1)[1] for image_file in image_files]
+    val,cou = np.unique(files,return_counts=True)
+    if len(val) !=len(files):
+        print(f"WARNING: There a Duplicates (files with the same name) in your input directory")
+        print(f"WARNING: This will cause problems: {len(files)} Files in total but only {len(val) } are unique")
+        for v,c in zip(val,cou):
+            if c>1:
+                file_name=[image_file for image_file in image_files if v  in image_file]
+                for file in file_name:
+                    print(f"{file}")
+                print("---")
+        print(
+            f"QUIT: Ensure that there are no duplicate files in your input directory to avoid unintendent behaviour")
+        quit()
     # Create file mapping
     df_mapping = create_name_mapping(image_files)
     df_mapping.to_csv(join(output_dir, "name_mapping.csv"), index=False)
