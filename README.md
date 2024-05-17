@@ -1,7 +1,5 @@
 # COMPUTING - Membrane Property Extraction
 
-# TODO Colorbar viz
-
 ## 1. Installation
 
 ```shell
