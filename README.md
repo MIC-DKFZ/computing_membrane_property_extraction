@@ -13,6 +13,20 @@ conda activate computing
 pip install -r requirements.txt
 ```
 
+#### Update on Installation
+
+When using ensemble you have to manually add a custom nnUNet Trainer.
+Do the previous installation and afterward install nnUNet in the following way into your `hereon_2023_computing` folder.
+
+```shell
+# Download and install nnUNet manually
+git clone https://github.com/MIC-DKFZ/nnUNet.git
+cd nnUNet
+pip install -e .
+# Copy this the trainer file to this location
+cp ../utils/nnUNetTrainerDA5BN.py nnunetv2/training/nnUNetTrainer/variants/data_augmentation/nnUNetTrainerDA5BN.py
+```
+
 ## 2. Membrane Property Extraction
 
 ### How to run
