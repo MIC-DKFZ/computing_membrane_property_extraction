@@ -4,4 +4,5 @@ notebooks/*
 nnUNetv2_trained_models/*
 *__pycache__*
 runner.sh
+stuff.py
 nnUNet/

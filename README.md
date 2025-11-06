@@ -1,10 +1,14 @@
-# COMPUTING - Membrane Property Extraction
+# COMPUTING - Connecting Membrane Pores and Production Parameters via Machine Learning
+
+This repository contains the code for extracting and analyzing membrane pores using deep learning.
+The pipeline includes image preprocessing, pore segmentation with nnU-Net, and quantitative property extraction.
+It enables linking membrane morphology to production parameters for reproducible and automated analysis.
 
 ## 1. Installation
 
 ```shell
 # Download Repository
-git clone https://codebase.helmholtz.cloud/hi-dkfz/applied-computer-vision-lab/collaborations/hereon_2023_computing.git
+git clone https://github.com/MIC-DKFZ/computing_membrane_property_extraction.git
 cd hereon_2023_computing
 # (Optional) - Create a new conda environment
 conda create --name computing python=3.10
@@ -18,6 +22,7 @@ pip install -r requirements.txt
 When using ensemble you have to manually add a custom nnUNet Trainer.
 Do the previous installation and afterward install nnUNet in the following way into your `hereon_2023_computing` folder.
 
+
 ```shell
 # Download and install nnUNet manually
 git clone https://github.com/MIC-DKFZ/nnUNet.git
@@ -26,6 +31,12 @@ pip install -e .
 # Copy this the trainer file to this location
 cp ../utils/nnUNetTrainerDA5BN.py nnunetv2/training/nnUNetTrainer/variants/data_augmentation/nnUNetTrainerDA5BN.py
 ```
+
+#### Model Weights
+
+Model weights can be found here: https://zenodo.org/records/17541943
+- (optional) Download and unzip them into the nnUNetv2_trained_models folder
+- otherwise they will be automatically downloaded when calling predict.py for the first time.
 
 ## 2. Membrane Property Extraction
 
@@ -65,6 +76,7 @@ All .tif files in the directory + all subdirectories will be used (files named "
 - **root_props:** 
 Path to the folder in which all the processed data and later all the extracted membrane properties will be saved in.
 
+- **Note** set --cutoff=0 if you dont have a black bar in your image
 
 ```shell
 python preprocessing_magnification.py -i=root_raw -o=root_props -m=magnification
@@ -124,6 +136,7 @@ The membrane properties and all visualizations will be saved here.
 <p align="left">
   <img src="Logos/HI_Logo.png" width="150"> &nbsp;&nbsp;&nbsp;&nbsp;
   <img src="Logos/DKFZ_Logo.png" width="500"> 
+  <img src="Logos/Hereon_Logo.png" width="150"> 
 </p>
 
 This Repository is developed and maintained by the Applied Computer Vision Lab (ACVL)

@@ -86,8 +86,7 @@ if __name__ == "__main__":
     dataset_name = "Dataset255_COMPUTING_it5"
     model_name = "nnUNetTrainerBN__nnUNetPlans__2d"
     model_folder = "nnUNetv2_trained_models"
-    #weights_url = "https://syncandshare.desy.de/index.php/s/XXstCCX8Ln6tnCn/download/Dataset254_COMPUTING_it4.zip"
-    weights_url = "https://syncandshare.desy.de/index.php/s/GSBioTqfsZp8dzx/download/Dataset255_COMPUTING_it5.zip"
+    weights_url = "https://zenodo.org/records/17541943/files/Dataset255_COMPUTING_it5.zip?download=1"
     parser = argparse.ArgumentParser(
         description="Preprocess images in input directory (renaming + cropping)"
     )
